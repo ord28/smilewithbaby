@@ -146,14 +146,29 @@
   .inline-audio{ margin-top:12px; display:none; }
   .inline-audio.open{ display:block; }
   .inline-audio audio{ width:100%; height:32px; }
+  .inline-audio audio::-webkit-media-controls-overflow-button{ display:none !important; }
+  .inline-audio audio::-webkit-media-controls-overflow-menu-button{ display:none !important; }
   .speed-row{
+    position:relative;
     display:flex; align-items:center; justify-content:center; gap:8px;
     margin-top:10px; font-size:12px; letter-spacing:.05em; color:var(--mute);
   }
-  .speed-row select{
+  .speed-btn{
     background:#111; color:#fff; border:1px solid rgba(255,255,255,0.3);
-    border-radius:6px; padding:4px 8px; font-size:12px; letter-spacing:.05em;
+    border-radius:6px; padding:4px 10px; font-size:12px; letter-spacing:.05em;
+    cursor:pointer; display:flex; align-items:center; gap:6px;
   }
+  .speed-menu{
+    display:none; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    margin-top:4px; background:#111; border:1px solid rgba(255,255,255,0.3);
+    border-radius:6px; overflow:hidden; z-index:5; min-width:70px;
+  }
+  .speed-menu.open{ display:block; }
+  .speed-menu button{
+    display:block; width:100%; padding:6px 12px; background:none; border:none;
+    color:#fff; font-size:12px; letter-spacing:.05em; text-align:left; cursor:pointer;
+  }
+  .speed-menu button:hover, .speed-menu button.active{ background:rgba(255,255,255,0.15); }
 
   /* PHOTO BREAK */
   .photo-break{ width:100%; padding:64px 0 80px; }
@@ -398,16 +413,19 @@
         <a class="btn" href="${t.audioFile}" download="${t.title} - Ba byy.mp3">Download</a>
         <div class="inline-audio" id="audio-${i}">
           <audio controls preload="none" src="${t.audioFile}"></audio>
-          <div class="speed-row">
+          <div class="speed-row" data-speed-group="${i}">
             Speed
-            <select data-speed-for="${i}">
-              <option value="0.5">0.5x</option>
-              <option value="0.75">0.75x</option>
-              <option value="1" selected>1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="2">2x</option>
-            </select>
+            <button type="button" class="speed-btn" data-speed-toggle="${i}">
+              <span data-speed-label="${i}">1x</span> ▾
+            </button>
+            <div class="speed-menu" data-speed-menu="${i}">
+              <button type="button" data-speed-val="0.5">0.5x</button>
+              <button type="button" data-speed-val="0.75">0.75x</button>
+              <button type="button" data-speed-val="1" class="active">1x</button>
+              <button type="button" data-speed-val="1.25">1.25x</button>
+              <button type="button" data-speed-val="1.5">1.5x</button>
+              <button type="button" data-speed-val="2">2x</button>
+            </div>
           </div>
         </div>`;
     }
@@ -431,11 +449,32 @@
     });
   });
 
-  grid.querySelectorAll('[data-speed-for]').forEach(sel => {
-    sel.addEventListener('change', () => {
-      const audioBox = document.getElementById(`audio-${sel.dataset.speedFor}`);
-      audioBox.querySelector('audio').playbackRate = parseFloat(sel.value);
+  grid.querySelectorAll('[data-speed-toggle]').forEach(toggleBtn => {
+    const idx = toggleBtn.dataset.speedToggle;
+    const menu = grid.querySelector(`[data-speed-menu="${idx}"]`);
+    const label = grid.querySelector(`[data-speed-label="${idx}"]`);
+    const audioBox = document.getElementById(`audio-${idx}`);
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.speed-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+      menu.classList.toggle('open');
     });
+
+    menu.querySelectorAll('[data-speed-val]').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const rate = parseFloat(opt.dataset.speedVal);
+        audioBox.querySelector('audio').playbackRate = rate;
+        label.textContent = opt.textContent;
+        menu.querySelectorAll('[data-speed-val]').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        menu.classList.remove('open');
+      });
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.speed-menu.open').forEach(m => m.classList.remove('open'));
   });
 
   // hero caption reflects the lead track automatically
