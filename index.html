@@ -146,6 +146,14 @@
   .inline-audio{ margin-top:12px; display:none; }
   .inline-audio.open{ display:block; }
   .inline-audio audio{ width:100%; height:32px; }
+  .speed-row{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:10px; font-size:12px; letter-spacing:.05em; color:var(--mute);
+  }
+  .speed-row select{
+    background:#111; color:#fff; border:1px solid rgba(255,255,255,0.3);
+    border-radius:6px; padding:4px 8px; font-size:12px; letter-spacing:.05em;
+  }
 
   /* PHOTO BREAK */
   .photo-break{ width:100%; padding:64px 0 80px; }
@@ -388,7 +396,20 @@
     if (t.audioFile) {
       buttons += `<button type="button" class="btn" data-play="${i}">Play Now</button>
         <a class="btn" href="${t.audioFile}" download="${t.title} - Ba byy.mp3">Download</a>
-        <div class="inline-audio" id="audio-${i}"><audio controls preload="none" src="${t.audioFile}"></audio></div>`;
+        <div class="inline-audio" id="audio-${i}">
+          <audio controls preload="none" src="${t.audioFile}"></audio>
+          <div class="speed-row">
+            Speed
+            <select data-speed-for="${i}">
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+        </div>`;
     }
     if (!primary && !t.audioFile) {
       buttons += `<span class="btn faint">Coming soon</span>`;
@@ -407,6 +428,13 @@
       const audioBox = document.getElementById(`audio-${btn.dataset.play}`);
       audioBox.classList.toggle('open');
       if (audioBox.classList.contains('open')) audioBox.querySelector('audio').play();
+    });
+  });
+
+  grid.querySelectorAll('[data-speed-for]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const audioBox = document.getElementById(`audio-${sel.dataset.speedFor}`);
+      audioBox.querySelector('audio').playbackRate = parseFloat(sel.value);
     });
   });
 
